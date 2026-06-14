@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    container_name: avista_parcelado
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    # O volume abaixo sincroniza os seus arquivos locais com o container.
+    # Se você editar o app.py, as mudanças refletem sem precisar dar build novamente.
+    volumes:
+      - .:/app
+      # Ignoramos a montagem do dados_navegador local para evitar conflito com o Linux do container
+      - /app/dados_navegador
+    restart: unless-stopped

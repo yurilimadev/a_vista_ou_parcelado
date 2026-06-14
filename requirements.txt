@@ -1,0 +1,9 @@
+streamlit
+playwright
+beautifulsoup4
+numpy-financial
+requests
+pandas
+numpy
+openai
+python-dotenv
