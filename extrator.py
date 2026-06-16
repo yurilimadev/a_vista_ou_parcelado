@@ -7,12 +7,10 @@ import streamlit as st
 def extrair_texto_html(url) -> str:
     with sync_playwright() as p:
 
-        navegador = p.chromium.launch(headless=True)
-
         contexto = p.chromium.launch_persistent_context(
             user_data_dir="./dados_navegador", # Salva os cookies aqui
-            headless=False, # Mudar para False ajuda a burlar o bloqueio inicial!
-            args=["--disable-blink-features=AutomationControlled"] # Oculta que é automatizado
+            headless=True, # Em produção precisa ser True para não quebrar o Docker
+            args=["--disable-blink-features=AutomationControlled", "--headless=new"] # Oculta que é automatizado e usa o novo modo headless
         )
         page = contexto.new_page()
 
@@ -26,7 +24,7 @@ def extrair_texto_html(url) -> str:
         time.sleep(4)
         html_bruto = page.content()
 
-        navegador.close()
+        contexto.close()
 
     soup = BeautifulSoup(html_bruto, 'html.parser')
 
