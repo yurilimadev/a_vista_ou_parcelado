@@ -1,8 +1,11 @@
 import streamlit as st
-from extrator import extrair_texto_html
-from analisador import carregar_analisador
-from custo_de_oportunidade import pegar_custo_de_oportunidade, analisar_situacao_de_compra
+import requests
+import pandas as pd
 
+# URL da nossa nova API interna (o nome 'api' é resolvido pelo Docker Compose)
+API_URL = "http://api:8000" 
+
+# --- Configurações e Estado da Sessão ---
 # Config da pagina
 st.set_page_config(
     page_title="A vista ou Parcelado?",
@@ -29,18 +32,25 @@ if botao_analisar:
     if not url:
         st.warning("Tem que colar um link de produto primeiro.")
     else:
-        # Se o usuário trocou de link, limpamos o parecer antigo da tela
         st.session_state.relatorio_ia = None
+        st.session_state.situacao_de_compra = None
         
-        with st.spinner("Extraindo Texto HTML..."):   
-            texto_para_analise = extrair_texto_html(url)
-
-        if texto_para_analise:
-            texto_tratado = carregar_analisador(texto_para_analise)
-            # Guardamos o dicionário de cálculos direto na sessão persistente
-            st.session_state.situacao_de_compra = analisar_situacao_de_compra(texto_tratado)
+        with st.spinner("Analisando o link... O robô está acessando a loja e calculando as opções."):
+            try:
+                response = requests.post(f"{API_URL}/analisar-url", json={"url": url}, timeout=60)
+                response.raise_for_status() # Lança um erro para respostas 4xx ou 5xx
+                st.session_state.situacao_de_compra = response.json()
+            except requests.exceptions.RequestException as e:
+                st.error(f"Falha na comunicação com o servidor de análise: {e}")
+            except Exception as e:
+                st.error(f"Ocorreu um erro inesperado: {e}")
+        
+        # Se a API retornou um erro no corpo da resposta
+        if st.session_state.situacao_de_compra and "detail" in st.session_state.situacao_de_compra:
+            st.error(f"Erro na análise: {st.session_state.situacao_de_compra['detail']}")
+            st.session_state.situacao_de_compra = None
         else:
-            st.error("Extração sofreu algum problema. Tente novamente.")
+            st.rerun()
 
 # --- 3. BLOCOS DE EXIBIÇÃO (FORA DO IF DO BOTÃO PRINCIPAL) ---
 # Se a nossa "gaveta" tiver dados salvos, renderizamos a tela inteira.
@@ -48,6 +58,10 @@ if botao_analisar:
 if st.session_state.situacao_de_compra is not None:
     situacao_de_compra = st.session_state.situacao_de_compra
     
+    # Convertendo o dicionário do DataFrame de volta para um DataFrame Pandas
+    if 'df_evolucao' in situacao_de_compra and isinstance(situacao_de_compra['df_evolucao'], list):
+        situacao_de_compra['df_evolucao'] = pd.DataFrame(situacao_de_compra['df_evolucao'])
+
     if "erro" not in situacao_de_compra:
         st.markdown("---")
         st.subheader(f"🏆 Decisão Recomendada: Pagar **{situacao_de_compra['melhor_opcao']}**")
@@ -134,11 +148,14 @@ if st.session_state.situacao_de_compra is not None:
                     st.error("⚠️ Você atingiu o limite de análises gratuitas nesta sessão. Tente novamente mais tarde!")
                 else:
                     with st.spinner("A Inteligência Artificial está analisando o seu cenário..."):
-                        from analisador import gerar_explicacao_detalhada
-                        st.session_state.relatorio_ia = gerar_explicacao_detalhada(situacao_de_compra)
-                        
-                        # 3. Incrementa o uso apenas depois que a análise é gerada com sucesso
-                        st.session_state.uso_llm += 1
+                        try:
+                            # Passamos o dicionário completo para a API
+                            response = requests.post(f"{API_URL}/gerar-parecer", json=situacao_de_compra, timeout=30)
+                            response.raise_for_status()
+                            st.session_state.relatorio_ia = response.json().get("parecer")
+                            st.session_state.uso_llm += 1
+                        except requests.exceptions.RequestException as e:
+                            st.error(f"Não foi possível gerar o parecer: {e}")
                         st.rerun()
         else:
             # 4. Feedback visual opcional: mostra quantas análises ainda restam
