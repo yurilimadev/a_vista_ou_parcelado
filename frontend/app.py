@@ -187,7 +187,7 @@ if st.session_state.resultado is not None:
     
     if parecer:
         st.markdown("---")
-        st.markdown("### 💡 Parecer da Inteligência Artificial")
+        st.markdown("### 💡 Explicando um pouc mais")
         texto_formatado = parecer.replace("R$", "R\\$")
         st.markdown(texto_formatado)
     

@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <title>À Vista ou Parcelado?</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            width: 320px;
-            padding: 15px;
-            text-align: center;
+            width: 340px;
+            padding: 16px;
             background-color: #f9f9f9;
             color: #333;
         }
@@ -17,40 +19,72 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
         }
         .header img {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
         }
-        h1 {
-            font-size: 18px;
+        .header h1 {
+            font-size: 16px;
             margin: 0;
+            color: #1a1a2e;
         }
         #status {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
+            margin-bottom: 8px;
         }
-        #resultado {
-            font-size: 20px;
+        #decisao {
+            font-size: 18px;
             font-weight: bold;
+            color: #1a1a2e;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        #parecer {
+            font-size: 12px;
+            color: #444;
+            line-height: 1.5;
+            text-align: left;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        .erro {
+            color: #dc3545;
+            background: #fff3f3;
+            border: 1px solid #dc3545;
+        }
+        .sucesso {
+            color: #28a745;
+        }
+        .loading {
             color: #005fcc;
-            margin-top: 12px;
-            min-height: 24px; /* Evita que o layout "pule" */
+        }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <!-- O ícone será o mesmo definido no manifest.json -->
-        <img src="icon.png" alt="Ícone do App">
+        <img src="icon.png" alt="Ícone">
         <h1>À Vista ou Parcelado?</h1>
     </div>
 
-    <p id="status">Iniciando análise da página...</p>
-    <div id="resultado"></div>
+    <div id="status" class="loading">🔄 Extraindo conteúdo da página...</div>
+    <div id="decisao" class="hidden"></div>
+    <div id="parecer" class="hidden"></div>
 
-    <!-- O script que controla a mágica -->
     <script src="popup.js"></script>
 </body>
 </html>
